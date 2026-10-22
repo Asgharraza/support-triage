@@ -1,6 +1,8 @@
-# Support Ticket Triage
+## Task 2: Model Integration
 
-Classifies support emails into **Category** (Billing, Technical, Account, General)
-and **Urgency** (Low, Medium, High) using TF-IDF + Logistic Regression.
+Combines the Task 1 TF-IDF classifier (category) with a pre-trained
+Hugging Face DistilBERT sentiment model (urgency), running locally — no API key, no cost.
 
-## Setup
+Install:
+```powershell
+pip install transformers torch

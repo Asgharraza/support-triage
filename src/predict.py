@@ -1,23 +1,25 @@
-import joblib, sys
+import sys
+from transformers import pipeline
 
-cat_model = joblib.load("models/category_model.joblib")
-urg_model = joblib.load("models/urgency_model.joblib")
+# Load the same sentiment model locally — downloaded once, then cached
+classifier = pipeline(
+    "text-classification",
+    model="distilbert/distilbert-base-uncased-finetuned-sst-2-english"
+)
 
 def triage(text):
-    cat = cat_model.predict([text])[0]
-    cat_conf = max(cat_model.predict_proba([text])[0])
-    urg = urg_model.predict([text])[0]
-    urg_conf = max(urg_model.predict_proba([text])[0])
-    needs_review = bool(min(cat_conf, urg_conf) < 0.7)
+    result = classifier(text)[0]
+    label = result["label"]
+    score = result["score"]
+    urgency = "High" if label == "NEGATIVE" and score > 0.8 else "Medium" if label == "NEGATIVE" else "Low"
+    needs_review = bool(score < 0.7)
     return {
-        "category": cat, "category_confidence": round(float(cat_conf), 3),
-        "urgency": urg, "urgency_confidence": round(float(urg_conf), 3),
+        "urgency": urgency,
+        "confidence": round(float(score), 3),
         "needs_human_review": needs_review,
+        "raw_label": label,
     }
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        text = " ".join(sys.argv[1:])
-    else:
-        text = input("Enter ticket text: ")
+    text = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else input("Enter ticket: ")
     print(triage(text))
